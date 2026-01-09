@@ -513,3 +513,86 @@ footer.site-footer {
   color: var(--text);
   font-weight: 600;
 }
+:root {
+  --primary: #FFB7C5;   /* Sakura pink */
+  --accent: #FF69B4;    /* Hot pink for buttons */
+  --bg: #FFF0F5;        /* Lavender blush background */
+  --text: #4A4A4A;      /* Soft charcoal for readability */
+  --card: #FFFFFF;      /* Clean white cards */
+  --border: #FFD6E7;    /* Light pink border */
+}.site-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--primary);
+  color: #fff;
+  padding: 20px;
+  border-bottom: 4px solid var(--accent);
+}
+
+.logo {
+  height: 60px;
+}
+.brand {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  font-size: 1.8rem;
+}.product-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  box-shadow: 0 4px 8px rgba(255, 182, 193, 0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 6px 12px rgba(255, 105, 180, 0.4);
+}
+
+.product-img {
+  width: 100%;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 10px;
+  margin-bottom: 12px;
+}.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: #ff85c1;
+}body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Poppins', sans-serif;
+}body {
+  background: var(--bg) url('assets/sakura-pattern.png') repeat;
+  background-size: 200px;
+}.nav-bar ul {
+  display: flex;
+  gap: 20px;
+  list-style: none;
+  padding: 0;
+}
+
+.nav-bar a {
+  text-decoration: none;
+  color: var(--text);
+  font-weight: 600;
+}<nav class="nav-bar">
+  <ul>
+    <li><a href="admin.html">Admin</a></li>
+    <li><a href="#">Click</a></li>
+    <li><a href="#">Login</a></li>
+  </ul>
+</nav>
