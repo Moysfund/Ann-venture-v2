@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Orders — Ann’s Ventures</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg1:#0f2027; --bg2:#203a43; --bg3:#2c5364; --accent:#f9d342; --accent-hover:#ffd700; --text:#fff; --muted:#cfd8dc; --card:rgba(255,255,255,0.08); --shadow:0 10px 30px rgba(0,0,0,0.35); }
+    body { font-family:'Poppins',sans-serif; margin:0; color:var(--text); background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3)); }
+    header { text-align:center; padding:2rem 1rem; }
+    header img { max-width:120px; margin-bottom:1rem; cursor:pointer; }
+    h1 { margin:0; color:var(--accent); }
+    main { max-width:1100px; margin:0 auto; padding:1rem; }
+    .panel { background:var(--card); border-radius:16px; padding:1rem; box-shadow:var(--shadow); backdrop-filter:blur(6px); }
+    ul { list-style:none; padding:0; margin:0; }
+    li { padding:0.9rem; border:1px solid rgba(255,255,255,0.12); border-radius:12px; margin-bottom:0.9rem; display:flex; justify-content:space-between; align-items:flex-start; gap:1rem; flex-wrap:wrap; }
+    .muted { color:var(--muted); }
+    .btn { padding:0.6rem 1rem; border:none; border-radius:8px; font-weight:600; background:var(--accent); color:#000; cursor:pointer; transition:background 0.25s ease; }
+    .btn:hover { background:var(--accent-hover); }
+    select { padding:0.4rem; border-radius:8px; border:none; }
+    footer { text-align:center; padding:1.5rem; margin-top:2rem; background:rgba(0,0,0,0.35); }
+    footer a { color:var(--accent); text-decoration:none; margin:0 0.5rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="index.html"><img src="logo.png" alt="Ann’s Ventures Logo"></a>
+    <h1>Orders Dashboard</h1>
+    <p class="muted">View, update, and manage customer orders</p>
+  </header>
+
+  <main>
+    <section class="panel">
+      <div id="status" class="muted" style="min-height:1.25rem;"></div>
+      <ul id="orderList"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <a href="index.html">Storefront</a> • 
+    <a href="admin.html">Admin</a>
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getFirestore, collection, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // Firebase config (your provided object)
+    const firebaseConfig = {
+      apiKey: "AIzaSyB8hFcULiR_DtQbHvSswwgUsvCuM0w7z50",
+      authDomain: "anns-venture.firebaseapp.com",
+      projectId: "anns-venture",
+      storageBucket: "anns-venture.firebasestorage.app",
+      messagingSenderId: "699590854312",
+      appId: "1:699590854312:web:4a88d59ef45563bbf1649d",
+      measurementId: "G-X2RCRHZVJ0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const formatNaira = (value) =>
+      new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(Number(value || 0));
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        window.location.href = "login.html";
+      }
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const orderList = document.getElementById("orderList");
+      const statusEl = document.getElementById("status");
+
+      async function loadOrders() {
+        statusEl.textContent = "Loading orders…";
+        try {
+          orderList.innerHTML = "";
+          const querySnapshot = await getDocs(collection(db, "orders"));
+          if (querySnapshot.empty) {
+            orderList.innerHTML = `<li class="muted">No orders yet.</li>`;
+          } else {
+            querySnapshot.forEach((docSnap) => {
+              const data = docSnap.data();
+              const items = (data.items || []).map(i => `${i.name} (${formatNaira(i.price)})`).join(", ");
+              const li = document.createElement("li");
+              li.innerHTML = `
+                <div>
+                  <strong>${data.customerName}</strong><br>
+                  <span class="muted">${data.createdAt || ""}</span><br>
+                  Items: ${items || "—"}<br>
+                  Total: ${formatNaira(data.total)}<br>
+                  Status: 
+                  <select>
+                    <option value="Pending"${data.status==="Pending"?" selected":""}>Pending</option>
+                    <option value="Processed"${data.status==="Processed"?" selected":""}>Processed</option>
+                    <option value="Shipped"${data.status==="Shipped"?" selected":""}>Shipped</option>
+                  </select>
+                </div>
+                <div>
+                  <button class="btn" data-action="delete">Delete</button>
+                </div>
+              `;
+
+              // Status update handler
+              const select = li.querySelector("select");
+              select.onchange = async () => {
+                try {
+                  await updateDoc(doc(db, "orders", docSnap.id), { status: select.value });
+                  statusEl.textContent = "Order status updated.";
+                } catch (err) {
+                  statusEl.innerHTML = `<span class="error">Update failed: ${err.message}</span>`;
+                }
+              };
+
+              // Delete handler
+              li.querySelector('[data-action="delete"]').onclick = async () => {
+                try {
+                  await deleteDoc(doc(db, "orders", docSnap.id));
+                  await loadOrders();
+                } catch (err) {
+                  statusEl.innerHTML = `<span class="error">Delete failed: ${err.message}</span>`;
+                }
+              };
+
+              orderList.appendChild(li);
+            });
+          }
+          statusEl.textContent = "";
+        } catch (err) {
+          statusEl.innerHTML = `<span class="error">Failed to load orders: ${err.message}</span>`;
+        }
+      }
+
+      loadOrders();
+    });
+  </script>
+</body>
+</html>
