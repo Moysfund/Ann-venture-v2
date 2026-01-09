@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Admin Login — Ann’s Ventures</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg1:#0f2027; --bg2:#203a43; --bg3:#2c5364; --accent:#f9d342; --accent-hover:#ffd700; --text:#fff; --muted:#cfd8dc; --card:rgba(255,255,255,0.08); --shadow:0 10px 30px rgba(0,0,0,0.35); }
+    body { font-family:'Poppins',sans-serif; margin:0; color:var(--text); background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3)); display:flex; min-height:100vh; align-items:center; justify-content:center; padding:1rem; }
+    .wrap { width:100%; max-width:420px; background:var(--card); border-radius:16px; padding:1.5rem; box-shadow:var(--shadow); backdrop-filter:blur(6px); text-align:center; }
+    h1 { margin:0 0 1rem; color:var(--accent); }
+    label { display:block; margin-top:0.75rem; text-align:left; }
+    input { width:100%; padding:0.6rem; border-radius:8px; border:none; margin-top:0.25rem; }
+    .btn { width:100%; margin-top:1rem; padding:0.7rem; border:none; border-radius:8px; font-weight:600; background:var(--accent); color:#000; cursor:pointer; transition:background 0.25s ease; }
+    .btn:hover { background:var(--accent-hover); }
+    .status { min-height:1.25rem; margin-top:0.5rem; color:var(--muted); }
+    .error { color:#ffb3b3; }
+    .footer { text-align:center; margin-top:1rem; }
+    .footer a { color:var(--accent); text-decoration:none; }
+    header img { max-width:120px; margin-bottom:1rem; cursor:pointer; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a href="index.html"><img src="logo.png" alt="Ann’s Ventures Logo"></a>
+    </header>
+    <h1>Admin Login</h1>
+    <form id="loginForm" novalidate>
+      <label>Email</label>
+      <input type="email" id="email" placeholder="admin@example.com" required>
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••" required>
+      <button id="loginBtn" class="btn" type="submit">Login</button>
+    </form>
+    <div id="status" class="status"></div>
+    <div class="footer"><a href="index.html">Back to Storefront</a></div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyB8hFcULiR_DtQbHvSswwgUsvCuM0w7z50",
+      authDomain: "anns-venture.firebaseapp.com",
+      projectId: "anns-venture",
+      storageBucket: "anns-venture.firebasestorage.app",
+      messagingSenderId: "699590854312",
+      appId: "1:699590854312:web:4a88d59ef45563bbf1649d",
+      measurementId: "G-X2RCRHZVJ0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const statusEl = document.getElementById("status");
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      if (!email || !password) {
+        statusEl.innerHTML = `<span class="error">Email and password are required.</span>`;
+        return;
+      }
+      try {
+        document.getElementById("loginBtn").disabled = true;
+        await signInWithEmailAndPassword(auth, email, password);
+        window.location.href = "admin.html";
+      } catch (error) {
+        statusEl.innerHTML = `<span class="error">Login failed: ${error.message}</span>`;
+      } finally {
+        document.getElementById("loginBtn").disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>
