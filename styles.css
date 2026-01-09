@@ -429,3 +429,8 @@ footer.site-footer {
   .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
   .container { padding: 0 16px; }
 }
+.logo {
+  height: 60px;   /* adjust size */
+  margin-right: 15px;
+  vertical-align: middle;
+}
