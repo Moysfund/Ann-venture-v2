@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Ann’s Ventures — Storefront</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg1: #0f2027; --bg2: #203a43; --bg3: #2c5364;
+      --accent: #f9d342; --accent-hover: #ffd700; --text: #ffffff; --muted: #cfd8dc;
+      --card: rgba(255,255,255,0.08); --card-hover: rgba(255,255,255,0.12);
+      --shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'Poppins', sans-serif; margin: 0; color: var(--text);
+           background: linear-gradient(135deg, var(--bg1), var(--bg2), var(--bg3)); }
+    header { text-align: center; padding: 2rem 1rem; }
+    header img { max-width: 120px; margin-bottom: 1rem; cursor: pointer; }
+    h1 { font-size: 2.5rem; margin: 0; color: var(--accent); }
+    header p { margin-top: 0.5rem; color: var(--muted); }
+    main { max-width: 1100px; margin: 0 auto; padding: 1rem; }
+    .section-title { font-size: 1.4rem; margin: 1rem 0; color: var(--accent); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
+    .card { background: var(--card); border-radius: 16px; padding: 1rem; box-shadow: var(--shadow);
+            transition: transform 0.3s ease, background 0.3s ease; backdrop-filter: blur(6px); }
+    .card:hover { transform: translateY(-6px); background: var(--card-hover); }
+    .card h3 { margin: 0.5rem 0; color: var(--accent); font-weight: 600; }
+    .price { color: var(--text); opacity: 0.9; margin-bottom: 0.75rem; }
+    .btn { background: var(--accent); color: #000; border: none; padding: 0.6rem 1rem; border-radius: 8px;
+           font-weight: 600; cursor: pointer; transition: background 0.25s ease, transform 0.2s ease; }
+    .btn:hover { background: var(--accent-hover); transform: translateY(-2px); }
+    .panel { background: var(--card); border-radius: 16px; padding: 1rem; box-shadow: var(--shadow); margin-top: 2rem; }
+    ul { list-style: none; padding: 0; margin: 0; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .muted { color: var(--muted); }
+    .status { margin: 0.75rem 0; min-height: 1.25rem; }
+    .error { color: #ffb3b3; }
+    footer { text-align: center; padding: 1.5rem; margin-top: 2rem; background: rgba(0,0,0,0.35); }
+    footer a { color: var(--accent); text-decoration: none; margin: 0 0.5rem; }
+    /* Modal styles */
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+             background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center;
+             opacity: 0; pointer-events: none; transition: opacity 0.4s ease; }
+    .modal.active { opacity: 1; pointer-events: auto; }
+    .modal-content { background: var(--card); padding: 2rem; border-radius: 16px; text-align: center;
+                     transform: scale(0.8); transition: transform 0.4s ease; box-shadow: var(--shadow); }
+    .modal.active .modal-content { transform: scale(1); }
+    .modal h2 { color: var(--accent); margin-bottom: 1rem; }
+    .close-btn { margin-top: 1rem; }
+    @media (max-width: 640px) { h1 { font-size: 2.1rem; } header img { max-width: 96px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="index.html"><img src="logo.png" alt="Ann’s Ventures Logo"></a>
+    <h1>Ann’s Ventures</h1>
+    <p>Discover excellence—shop with elegance.</p>
+  </header>
+
+  <main>
+    <section>
+      <h2 class="section-title">Featured Products</h2>
+      <div id="status" class="status muted"></div>
+      <div class="grid" id="productList" aria-live="polite"></div>
+    </section>
+
+    <section class="panel" aria-label="Shopping cart">
+      <h2 class="section-title">Your Cart</h2>
+      <ul id="cartList"></ul>
+      <p><strong>Total:</strong> <span id="cartTotal">₦0</span></p>
+      <button id="checkoutBtn" class="btn">Checkout</button>
+    </section>
+  </main>
+
+  <footer>
+    <a href="admin.html">Admin</a> • 
+    <a href="orders.html">Orders</a> • 
+    <a href="login.html">Login</a>
+  </footer>
+
+  <!-- Welcome Modal -->
+  <div id="welcomeModal" class="modal">
+    <div class="modal-content">
+      <h2>Welcome to Ann’s Ventures</h2>
+      <p>Experience a dynamic, AI‑driven shopping journey.</p>
+      <button class="btn close-btn" id="closeModal">Start Exploring</button>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    // TODO: Replace with your Firebase project config
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const formatNaira = (value) =>
+      new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(Number(value || 0));
+
+    let cart = [];
+
+    async function loadProducts() {
+      const statusEl = document.getElementById("status");
+      const productList = document.getElementById("productList");
+      statusEl.textContent = "Loading products…";
+      try {
+        productList.innerHTML = "";
+        const querySnapshot = await getDocs(collection(db, "products"));
+        if (querySnapshot.empty) {
+          productList.innerHTML = `<div class="muted">No products yet. Check back soon.</div>`;
+        } else {
+          querySnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            const card = document.createElement("div");
+            card.className = "card";
+            card.innerHTML = `
+              <h3>${data.name}</h3>
+              <div class="price">${formatNaira(data.price)}</div>
+              <button class="btn" aria-label="Add ${data.name} to cart">Add to Cart</button>
+            `;
+            card.querySelector("button").onclick = () => {
+              cart.push({ name: data.name, price: Number(data.price) });
+              renderCart();
+            };
+            productList.appendChild(card);
+          });
+        }
+        statusEl.textContent = "";
+      } catch (err) {
+        statusEl.innerHTML = `<span class="error">Failed to load products: ${err.message}</span>`;
+      }
+    }
+
+    function renderCart() {
+      const cartList = document.getElementById("cartList");
+      const totalEl = document.getElementById("cartTotal");
+      cartList.innerHTML = "";
+      if (cart.length === 0) {
+        cartList.innerHTML = `<li class="muted">Your cart is empty.</li>`;
+      } else {
+        cart.forEach((item, index) => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <span>${item.name} — ${formatNaira(item.price)}</span>
+            <button class="btn" aria-label="Remove ${item.name} from cart">Remove</button>
+          `;
+          li.querySelector("button").onclick = () => {
+            cart.splice(index, 1);
+            renderCart();
+          };
+          cartList.appendChild(li);
+        });
+      }
+      const total = cart.reduce((sum, item) => sum + Number(item.price), 0);
+      totalEl.textContent = formatNaira(total);
+    }
+
+    async function checkout() {
+      const statusEl = document.getElementById("status");
+      statusEl.textContent = "";
+      if (cart.length === 0) {
+        statusEl.innerHTML = `<span class="error">Your cart is empty.</span>`;
+        return;
+      }
+      const customerName = prompt("Enter your name:");
+      if (!customerName || customerName.trim().length < 2) {
+        statusEl.innerHTML = `<span class="error">Please enter a valid name.</span>`;
+        return;
+      }
+      const total = cart.reduce((sum, item) => sum + Number(item.price), 0);
+
+      try {
+        const btn = document.getElementById("checkoutBtn");
+        btn.disabled = true;
+        await addDoc(collection(db, "orders"), {
+          customerName: customerName.trim(),
+          items: cart,
+          total,
+          createdAt: new Date().toISOString()
+        });
+        cart = [];
+        renderCart();
+        window.location.href = "thankyou.html";
+      } catch (err) {
+        statusEl.innerHTML = `<span class="error">Checkout failed: ${err.message}</span>`;
+      } finally {
+        document.getElementById("checkoutBtn").disabled = false;
+      }
+    }
+
+    // Modal behavior
+    function openWelcomeModal() {
+      const modal = document.getElementById("welcomeModal");
+      modal.classList.add("active");
+    }
+    function closeWelcomeModal() {
+      const modal = document.getElementById("welcomeModal");
+      modal.classList.remove("active");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Open modal on load
+      openWelcomeModal();
+      document.getElementById("closeModal").addEventListener("click", closeWelcomeModal);
+      // Load products and init cart
+      loadProducts();
+      renderCart();
+      // Checkout handler
+      document.getElementById("checkoutBtn").addEventListener("click", checkout);
+    });
+  </script>
+</body>
+</html>
